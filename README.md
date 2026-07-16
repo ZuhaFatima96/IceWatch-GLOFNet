@@ -1,33 +1,212 @@
 # IceWatch
-Forecasting Glacial Lake Outburst Floods(GLOFs) using Multimodal Deep Learning
-# Project Overview:
-This project presents an AI-based early warning system designed to predict potential Glacial Lake Outburst Floods (GLOFs), using environmental data, machine learning, and real-time monitoring. Inspired by the 2022 floods, which brought significant devastation to our region, this system aims to reduce the impact of such natural disasters by providing timely warnings.
-<br /><br />
-![Screenshot 2024-11-27 190035](https://github.com/user-attachments/assets/e9561208-b638-49fd-9c51-00703619a004)
 
-<br />
+**A multimodal deep-learning framework for glacial lake outburst flood (GLOF) early warning**
 
-https://github.com/user-attachments/assets/1ee5b4a3-8bae-4988-8ddd-bdd7ec1bcd1a
+Shisper Glacier · Hunza Valley · Karakoram · Pakistan
+
+[![Paper](https://img.shields.io/badge/paper-NHESS%20(under%20review)-b31b1b)](#-citation)
+[![Dataset](https://img.shields.io/badge/dataset-GLOFNet-orange)](https://doi.org/10.1109/ICoDT269104.2025.11360730)
+[![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-TerraFlow-ee4c2c)](https://pytorch.org/)
+[![TensorFlow](https://img.shields.io/badge/TensorFlow-RiskFlow%20%7C%20TempFlow-ff6f00)](https://www.tensorflow.org/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+</div>
+
+---
+
+## Overview
+
+Glacial lake outburst floods release millions of cubic metres of water within hours, threatening communities, roads and hydropower infrastructure across high-mountain Asia. Operational monitoring still leans on hydrological breach models, threshold-based water indices and manual satellite interpretation; methods that update slowly, need expert time, and degrade badly under cloud cover.
+
+**IceWatch** takes a different route. It runs two independent streams over the same glacier and only raises an alert when they agree:
+
+- **Vision stream** — CNN reads Sentinel-2 multispectral imagery for the visual signature of lake formation and outburst conditions.
+- **Tabular stream** — Transformer estimates the glacier's kinematic state from NASA ITS_LIVE velocity records, while a stacked bidirectional LSTM forecasts surface temperature from MODIS observations.
+
+Neither stream is trusted alone. Cloud remnants and fresh snow can fool a vision model; a thermal anomaly on its own means little. **FusionFlow** issues a high-confidence alert only when the visual evidence *and* the physical evidence are elevated at once; otherwise the case goes to a human analyst. On the May 2022 Shisper outburst sequence, both streams independently flagged both events, and thermal forecast skill held out to a **72–96 hour horizon**: days of warning rather than hours.
+
+---
+
+## Architecture
+
+<div align="center">
+
+<img width="2280" height="1760" alt="icewatch_architecture" src="https://github.com/user-attachments/assets/a9b8dd21-5004-49a7-9b66-871aabcf218a" />
+
+</div>
+
+### The four modules
+
+| Module | Type | Input | Output | Key configuration |
+|---|---|---|---|---|
+| **RiskFlow** | CNN classifier | Sentinel-2 patch, 128 × 128 × 6 | GLOF probability `P_vis` | Conv 32 → Conv 64 → Dense 64 → sigmoid · 3.71 M params · BCE loss |
+| **TerraFlow** | Transformer encoder | 32-day ITS_LIVE window | Peak surface velocity | 4 layers · 8 heads · d = 256 · 5.5 M params · L1 (median) loss |
+| **TempFlow** | Stacked BiLSTM | 30-day MODIS LST window | Surface-temperature forecast | BiLSTM 128 → LSTM 64 → LSTM 32 · dropout 0.4/0.4/0.3 · MSE loss |
+| **FusionFlow** | Decision-level fusion | `P_vis`, `P_tab` | Alert / review / quiescent | Agreement rule at θ = 0.5 |
+
+### The decision rule
+
+```
+alert      ⟺  P_vis > 0.5  AND  P_tab > 0.5     → issue warning
+review     ⟺  exactly one stream > 0.5          → analyst adjudicates
+quiescent  ⟺  neither stream > 0.5              → no action
+```
+
+Why the rule matters: on **5 April 2022** the tabular score reached 0.657 — higher than on either real event date — while the vision stream saw essentially nothing. The streams disagreed, no alert fired, and the day was correctly quiet. That is the false-alarm mode the dual-stream design exists to contain.
+
+---
+
+## Results
+
+| Module | Metric | Value |
+|---|---|---|
+| RiskFlow | Accuracy (n = 71) | **0.94** |
+| RiskFlow | GLOF-class recall | **0.96** (95 % CI 0.79–0.99) |
+| RiskFlow | GLOF-class precision / F1 | 0.88 / 0.92 |
+| TerraFlow | Test MAE (spatial holdout) | **20.5 m yr⁻¹** |
+| TempFlow | MAE / RMSE / R² (N = 19 748) | **1.34 K** / 2.00 K / **0.956** |
+| System | Reliable forecast horizon | **72–96 h** |
+
+**May 2022 case study**: Both events flagged, no false alarms across the evaluated sequence:
+
+| Date | TerraFlow (m yr⁻¹) | TempFlow (°C) | `P_tab` | `P_vis` | Decision | Actual |
+|---|---|---|---|---|---|---|
+| 5 Apr | 12.9 | −5.0 | 0.657 | 0.00 % | no alert | — |
+| 10 Apr | 53.3 | −4.8 | 0.457 | 0.01 % | no alert | — |
+| 15 Apr | 16.7 | −6.1 | 0.488 | 0.00 % | no alert | — |
+| **10 May** | **455.3** | **−0.2** | **0.616** | **83.2 %** | **🚨 ALERT** | **GLOF** |
+| **25 May** | **204.7** | **−1.1** | **0.566** | **89.4 %** | **🚨 ALERT** | **GLOF** |
+| 14 Jun | 13.4 | −5.6 | 0.491 | 1.4 % | no alert | — |
+
+### Scope and limitations
+
+We would rather you read these here than discover them later:
+
+- Evaluation rests on **one confirmed outburst sequence at Shisper glacier** ; transferability is untested.
+- Image augmentation precedes the train/val/test split, so vision-stream metrics reflect augmented views of a small set of source scenes and are **optimistic** with respect to fully independent scenes.
+- TerraFlow's velocity split is **spatial** (unseen grid points, same melt season), not temporal.
+- TerraFlow **estimates** concurrent peak velocity from mean velocity; it does not extrapolate forward. Anticipatory skill comes from TempFlow.
+- Median (L1) regression trades accuracy in the extreme surge tail for robust baseline tracking.
+
+---
+
+## Demo
+
+<!--
+  TO ADD THE VIDEO — see "Adding the demo video" in CONTRIBUTING notes:
+  1. Open an Issue on this repo (you don't have to submit it).
+  2. Drag your .mp4 into the comment box and wait for the upload to finish.
+  3. GitHub returns a URL like https://github.com/user-attachments/assets/xxxxxxxx
+  4. Paste that URL on its own line below, then delete this comment.
+  Limits: 10 MB (free plan) / 100 MB (paid). MP4 (H.264) is the safest format.
+-->
 
 
-# Problem Statement:
-With increasing global temperatures, glacial lakes are expanding, raising the risk of outburst floods that can severely impact communities and infrastructure. Traditional methods of monitoring are limited in predictive capability, making it challenging to act before a flood occurs. This project seeks to fill this gap by leveraging AI to enhance predictive accuracy for GLOFs, potentially providing early alerts that could mitigate loss of life and property damage.
-# Features
-**-Data Collection:** Aggregation of real-time data from satellite sources, meteorological stations, and environmental sensors. <br /><br />
-**-Predictive Analysis:** Machine learning model trained to analyze collected data and predict potential GLOF events. <br /><br />
-**-Alerts and Notifications:** Immediate notifications sent to local authorities and community members via SMS and email upon detecting a high-risk scenario. <br /><br />
-# Tools and Techonologies Used:
-**Programming Language:** Python <br />
-**Machine Learning Frameworks**: TensorFlow, Scikit-learn <br />
-**Data Processing:** Pandas, NumPy 
-**Modeling Techniques:** Time Series Analysis, Regression, Classification <br />
-**Models Deployment:** Flask (for API), Docker <br />
-**Notifications:** Twilio (for SMS alerts), SendGrid (for email notifications) <br />
-<br />
-![Screenshot 2024-11-27 185903](https://github.com/user-attachments/assets/7971c196-deff-44b5-8e1c-8e735da08857)
-<br /><br />
 
-# Data Sources:
+https://github.com/user-attachments/assets/e26c1115-ac7c-4790-8f74-64bc8e37143c
+
+
+
+---
+
+## Dataset
+
+IceWatch is built entirely on **GLOFNet**, our separately published multimodal dataset for Shisper Glacier. GLOFNet harmonises three Earth-observation streams in space and time:
+
+| Source | Content | Coverage |
+|---|---|---|
+| Sentinel-2 MSI | 6 bands (B2, B3, B4, B8, B11, B12), 128 × 128 patches | 10–20 m |
+| NASA ITS_LIVE | 73.6 M → 11.9 M velocity records | 1988–2024 |
+| MODIS MOD11A1 v6.1 | Daily land-surface temperature | 2000–2024, 1 km |
+
+All acquisition, cloud masking, quality filtering, labelling and harmonisation procedures are documented in the GLOFNet paper; **this repository does not duplicate them**.
+
+> 📄 Fatima, Z., Sohaib, M. A., Talha, M., Sultana, S., Kanwal, A., and Perwaiz, N.: *GLOFNet — a multimodal dataset for GLOF monitoring and prediction*, ICoDT2, 2025. [DOI: 10.1109/ICoDT269104.2025.11360730](https://doi.org/10.1109/ICoDT269104.2025.11360730)
+
+---
+
+## Repository structure
+
+```
+IceWatch/
+├── docs/
+│   └── icewatch_architecture.svg    # architecture diagram (above)
+├── notebooks/
+│   ├── RiskFlow.ipynb               # vision stream — CNN training & evaluation
+│   ├── terraflow.ipynb              # velocity Transformer — training & evaluation
+│   └── tempflow.ipynb               # temperature BiLSTM — training & evaluation
+├── models/
+│   ├── riskflow.keras               # trained CNN
+│   ├── terraflow_transformer.pth    # trained Transformer
+│   └── tempflow_bilstm.keras        # trained BiLSTM
+├── figures/                         # figures reproduced in the paper
+├── requirements.txt
+├── LICENSE
+└── README.md
+```
+
+---
+
+## Getting started
+
+```bash
+git clone https://github.com/ZuhaFatima96/IceWatch-GLOFNet.git
+cd IceWatch-GLOFNet
+pip install -r requirements.txt
+```
+
+Download the GLOFNet dataset (link in the paper above), then run the notebooks in `notebooks/`. RiskFlow and TempFlow use TensorFlow/Keras; TerraFlow uses PyTorch with mixed-precision training and expects a CUDA device.
+
+---
+
+## Citation
+
+If you use this code or build on the framework, please cite the IceWatch paper:
+
+```bibtex
+@article{fatima2026icewatch,
+  author  = {Fatima, Zuha and Sohaib, Muhammad Anser and Talha, Muhammad and
+             Kanwal, Ayesha and Sultana, Sidra and Perwaiz, Nazia},
+  title   = {{IceWatch}: a multimodal deep-learning framework for early warning of
+             glacial lake outburst floods, demonstrated at {Shisper} {Glacier}, {Karakoram}},
+  journal = {Natural Hazards and Earth System Sciences},
+  note    = {Under review},
+  year    = {2026}
+}
+```
+
+and the dataset paper:
+
+```bibtex
+@inproceedings{fatima2025glofnet,
+  author    = {Fatima, Zuha and Sohaib, Muhammad Anser and Talha, Muhammad and
+               Sultana, Sidra and Kanwal, Ayesha and Perwaiz, Nazia},
+  title     = {{GLOFNet} -- a multimodal dataset for {GLOF} monitoring and prediction},
+  booktitle = {Proc. Int. Conf. on Digital Futures and Transformative Technologies (ICoDT2)},
+  pages     = {1--8},
+  doi       = {10.1109/ICoDT269104.2025.11360730},
+  year      = {2025}
+}
+```
+
+---
+
+## Authors
+
+Zuha Fatima · Muhammad Anser Sohaib · Muhammad Talha · Ayesha Kanwal · Sidra Sultana · **Nazia Perwaiz** (corresponding)
+
+School of Electrical Engineering and Computer Science (SEECS)
+National University of Sciences and Technology (NUST), Islamabad, Pakistan
+
+---
+
+## License
+
+Released under the MIT License — see [LICENSE](LICENSE).
+
+Sentinel-2 data © European Union / ESA / Copernicus. ITS_LIVE and MODIS products courtesy of NASA.
+
 **Satellite Imagery:** MODIS <br /><br />
 **Ice Velocity Data:** ITS_LIVE <br /> https://nsidc.org/apps/itslive/ <br /><br />
 **Landsat Climate Data:** Local meteorological stations <br /><br />
