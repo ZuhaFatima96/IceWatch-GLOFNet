@@ -28,6 +28,10 @@ Neither stream is trusted alone. Cloud remnants and fresh snow can fool a vision
 
 ---
 
+
+https://github.com/user-attachments/assets/7982dd40-490e-47ba-a460-78fbe162fd99
+
+
 ## Architecture
 
 <div align="center">
@@ -93,14 +97,7 @@ We would rather you read these here than discover them later:
 
 ## Demo
 
-<!--
-  TO ADD THE VIDEO — see "Adding the demo video" in CONTRIBUTING notes:
-  1. Open an Issue on this repo (you don't have to submit it).
-  2. Drag your .mp4 into the comment box and wait for the upload to finish.
-  3. GitHub returns a URL like https://github.com/user-attachments/assets/xxxxxxxx
-  4. Paste that URL on its own line below, then delete this comment.
-  Limits: 10 MB (free plan) / 100 MB (paid). MP4 (H.264) is the safest format.
--->
+https://icewatch.streamlit.app/
 
 
 
@@ -126,35 +123,7 @@ All acquisition, cloud masking, quality filtering, labelling and harmonisation p
 
 ---
 
-## Repository structure
 
-```
-IceWatch/
-├── docs/
-│   └── icewatch_architecture.svg    # architecture diagram (above)
-├── notebooks/
-│   ├── RiskFlow.ipynb               # vision stream — CNN training & evaluation
-│   ├── terraflow.ipynb              # velocity Transformer — training & evaluation
-│   └── tempflow.ipynb               # temperature BiLSTM — training & evaluation
-├── models/
-│   ├── riskflow.keras               # trained CNN
-│   ├── terraflow_transformer.pth    # trained Transformer
-│   └── tempflow_bilstm.keras        # trained BiLSTM
-├── figures/                         # figures reproduced in the paper
-├── requirements.txt
-├── LICENSE
-└── README.md
-```
-
----
-
-## Getting started
-
-```bash
-git clone https://github.com/ZuhaFatima96/IceWatch-GLOFNet.git
-cd IceWatch-GLOFNet
-pip install -r requirements.txt
-```
 
 Download the GLOFNet dataset (link in the paper above), then run the notebooks in `notebooks/`. RiskFlow and TempFlow use TensorFlow/Keras; TerraFlow uses PyTorch with mixed-precision training and expects a CUDA device.
 
