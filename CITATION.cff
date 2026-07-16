@@ -1,5 +1,7 @@
 cff-version: 1.2.0
-title: "IceWatch: a multimodal deep-learning framework for GLOF early warning"
+title: "IIceWatch: A multimodal deep-learning framework for early
+warning of glacial lake outburst floods, demonstrated at Shisper
+Glacier, Karakoram"
 message: "If you use this software or the IceWatch framework, please cite both the software and the paper below."
 type: software
 authors:
