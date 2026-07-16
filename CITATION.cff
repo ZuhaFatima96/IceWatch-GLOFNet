@@ -1,0 +1,69 @@
+cff-version: 1.2.0
+title: "IceWatch: a multimodal deep-learning framework for GLOF early warning"
+message: "If you use this software or the IceWatch framework, please cite both the software and the paper below."
+type: software
+authors:
+  - given-names: Zuha
+    family-names: Fatima
+    affiliation: "School of Electrical Engineering and Computer Science (SEECS), National University of Sciences and Technology (NUST), Islamabad, Pakistan"
+  - given-names: "Muhammad Anser"
+    family-names: Sohaib
+    affiliation: "School of Electrical Engineering and Computer Science (SEECS), National University of Sciences and Technology (NUST), Islamabad, Pakistan"
+  - given-names: Muhammad
+    family-names: Talha
+    affiliation: "School of Electrical Engineering and Computer Science (SEECS), National University of Sciences and Technology (NUST), Islamabad, Pakistan"
+  - given-names: Ayesha
+    family-names: Kanwal
+    affiliation: "School of Electrical Engineering and Computer Science (SEECS), National University of Sciences and Technology (NUST), Islamabad, Pakistan"
+  - given-names: Sidra
+    family-names: Sultana
+    affiliation: "School of Electrical Engineering and Computer Science (SEECS), National University of Sciences and Technology (NUST), Islamabad, Pakistan"
+  - given-names: Nazia
+    family-names: Perwaiz
+    email: nazia.perwaiz@seecs.edu.pk
+    affiliation: "School of Electrical Engineering and Computer Science (SEECS), National University of Sciences and Technology (NUST), Islamabad, Pakistan"
+repository-code: "https://github.com/ZuhaFatima96/IceWatch-GLOFNet"
+abstract: >-
+  IceWatch is a dual-stream deep-learning framework for early warning of glacial
+  lake outburst floods (GLOFs). A vision stream (RiskFlow) classifies Sentinel-2
+  multispectral imagery with a convolutional neural network; a tabular stream
+  estimates glacier surface velocity from NASA ITS_LIVE records with a Transformer
+  encoder (TerraFlow) and forecasts MODIS land-surface temperature with a stacked
+  bidirectional LSTM (TempFlow). A fusion stage (FusionFlow) issues a
+  high-confidence alert only when both streams are simultaneously elevated.
+  Demonstrated on Shisper Glacier, Karakoram, Pakistan.
+keywords:
+  - glacial lake outburst flood
+  - GLOF
+  - early warning
+  - multimodal deep learning
+  - remote sensing
+  - Sentinel-2
+  - glacier surge
+  - Karakoram
+  - cryosphere
+license: MIT
+version: 1.0.0
+date-released: "2026-07-16"
+
+# The paper to cite in preference to the software itself.
+# TODO: once the EGUsphere preprint is live, add its DOI here and update `year`.
+preferred-citation:
+  type: article
+  title: "IceWatch: a multimodal deep-learning framework for early warning of glacial lake outburst floods, demonstrated at Shisper Glacier, Karakoram"
+  authors:
+    - given-names: Zuha
+      family-names: Fatima
+    - given-names: "Muhammad Anser"
+      family-names: Sohaib
+    - given-names: Muhammad
+      family-names: Talha
+    - given-names: Ayesha
+      family-names: Kanwal
+    - given-names: Sidra
+      family-names: Sultana
+    - given-names: Nazia
+      family-names: Perwaiz
+  journal: "Natural Hazards and Earth System Sciences"
+  year: 2026
+  notes: "Under review"
