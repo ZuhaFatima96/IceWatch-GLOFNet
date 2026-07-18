@@ -123,7 +123,7 @@ IceWatch is built entirely on **GLOFNet**, our separately published multimodal d
 
 All acquisition, cloud masking, quality filtering, labelling and harmonisation procedures are documented in the GLOFNet paper; **this repository does not duplicate them**.
 
-> 📄 Fatima, Z., Sohaib, M. A., Talha, M., Sultana, S., Kanwal, A., and Perwaiz, N.: *GLOFNet — a multimodal dataset for GLOF monitoring and prediction*, ICoDT2, 2025. [DOI: 10.1109/ICoDT269104.2025.11360730](https://doi.org/10.1109/ICoDT269104.2025.11360730)
+> 📄 Fatima, Z., Sohaib, M. A., Talha, M., Sultana, S., Kanwal, A., and Perwaiz, N.: *GLOFNet — a multimodal dataset for GLOF monitoring and prediction*, ICoDT2, 2025. [DOI: 10.1109/ICoDT269104.2025.11360730](https://doi.org/10.1109/ICoDT269104.2025.11360730). The dataset is available at https://drive.google.com/drive/folders/191x2uwFRzgd2CMfqpqdVw0UrT5YZYjHN
 
 ---
 
